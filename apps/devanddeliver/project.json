@@ -1,0 +1,74 @@
+{
+  "name": "devanddeliver",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/devanddeliver/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/devanddeliver",
+        "main": "apps/devanddeliver/src/main.ts",
+        "tsConfig": "apps/devanddeliver/tsconfig.app.json",
+        "assets": [
+          "apps/devanddeliver/src/assets"
+        ],
+        "isolatedConfig": true,
+        "webpackConfig": "apps/devanddeliver/webpack.config.js"
+      },
+      "configurations": {
+        "development": {},
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "devanddeliver:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "devanddeliver:build:development"
+        },
+        "production": {
+          "buildTarget": "devanddeliver:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "apps/devanddeliver/**/*.ts"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
+      "options": {
+        "jestConfig": "apps/devanddeliver/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    }
+  },
+  "tags": []
+}
