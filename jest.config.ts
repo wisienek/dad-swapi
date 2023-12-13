@@ -1,5 +1,7 @@
-import { getJestProjects } from '@nx/jest';
+const { getJestProjects } = require('@nx/jest');
 
 export default {
-projects: getJestProjects()
+  projects: [...getJestProjects()],
+  resolver: '@nx/jest/plugins/resolver',
+  collectCoverage: true,
 };

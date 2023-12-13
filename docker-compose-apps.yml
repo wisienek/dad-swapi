@@ -1,0 +1,19 @@
+version: '3.9'
+
+x-environment: &commonEnvironment
+  REDIS_HOST: 'redis'
+  NODE_ENV: 'development'
+
+services:
+  api:
+    container_name: devanddeliver_api
+    image: devanddeliver_api
+    platform: linux/x86_64
+    networks:
+      - devanddeliver
+    env_file:
+      - .env
+    environment: *commonEnvironment
+
+networks:
+  devanddeliver:

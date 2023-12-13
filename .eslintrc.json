@@ -38,9 +38,16 @@
         "*.tsx"
       ],
       "extends": [
-        "plugin:@nx/typescript"
+        "plugin:@nx/typescript",
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:prettier/recommended"
       ],
-      "rules": {}
+      "parser": "@typescript-eslint/parser",
+      "plugins": ["@typescript-eslint/eslint-plugin"],
+      "rules": {
+        "curly": "error"
+      }
     },
     {
       "files": [
@@ -62,7 +69,9 @@
       "env": {
         "jest": true
       },
-      "rules": {}
+      "rules": {
+        "curly": "error"
+      }
     }
   ]
 }

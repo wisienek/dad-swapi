@@ -1,0 +1,15 @@
+version: '3.9'
+
+services:
+  redis:
+    container_name: devanddevelop_redis
+    profiles:
+      - core
+    image: redis:6
+    networks:
+      - devanddeliver
+    ports:
+      - '${REDIS_PORT}:6379'
+
+networks:
+  devanddeliver:
