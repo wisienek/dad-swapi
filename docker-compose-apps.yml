@@ -7,8 +7,10 @@ x-environment: &commonEnvironment
 services:
   api:
     container_name: devanddeliver_api
-    image: devanddeliver_api
+    image: api
     platform: linux/x86_64
+    ports:
+      - '${APP_PORT}:${APP_PORT}'
     networks:
       - devanddeliver
     env_file:
