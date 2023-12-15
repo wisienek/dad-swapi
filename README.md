@@ -77,3 +77,13 @@ docker build -t api -f dockerize/Dockerfile .
 docker-compose -f ./docker-compose-apps.yml up api
 ```
 
+### Documentation
+
+Documentation is generated with Swagger [nest docs](https://docs.nestjs.com/openapi/types-and-parameters)
+To see all available endpoints and documentation regarding inputs and outgoing schema:
+Open application host url with port and add `/docs` path.
+Example for port `3000` running on localhost:
+
+```
+http://localhost:3000/docs
+```
