@@ -1,25 +1,22 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { _RedisEnv, RedisEnv } from './redis.env';
+import { Injectable } from '@nestjs/common';
 import { BaseConfig } from '../../../base.config';
+import { ConfigService } from '../../../config.service';
 
 @Injectable()
-export class RedisConfig extends BaseConfig {
-  constructor(
-    @Inject(RedisEnv.KEY)
-    protected env: _RedisEnv
-  ) {
-    super();
+export class RedisConfig extends BaseConfig<'REDIS'> {
+  constructor(configService?: ConfigService) {
+    super('REDIS', configService ?? ConfigService.init(RedisConfig));
   }
 
   get host(): string {
-    return this.env.REDIS_HOST;
+    return this.variables.REDIS_HOST || 'rediss://localhost';
   }
 
   get port(): number {
-    return this.env.REDIS_PORT;
+    return this.variables.REDIS_PORT || 6379;
   }
 
   get ttl(): number {
-    return this.env.REDIS_DEFAULT_TTL;
+    return this.variables.REDIS_DEFAULT_TTL;
   }
 }

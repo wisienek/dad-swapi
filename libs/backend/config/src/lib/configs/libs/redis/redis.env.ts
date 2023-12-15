@@ -1,9 +1,7 @@
-import { IsNumber, IsUrl } from 'class-validator';
-import { registerAs } from '@nestjs/config';
+import { IsNumber, IsString, NotEquals } from 'class-validator';
 import { Expose } from 'class-transformer';
-import { validateUtil } from '../../../validate.util';
 
-export class _RedisEnv {
+export class RedisEnv {
   @IsNumber({
     allowNaN: false,
     allowInfinity: false,
@@ -12,10 +10,8 @@ export class _RedisEnv {
   @Expose()
   REDIS_PORT: number;
 
-  @IsUrl({
-    protocols: ['http', 'https'],
-    require_protocol: true,
-  })
+  @IsString()
+  @NotEquals('')
   @Expose()
   REDIS_HOST: string;
 
@@ -27,5 +23,3 @@ export class _RedisEnv {
   @Expose()
   REDIS_DEFAULT_TTL: number = 60 * 60 * 24;
 }
-
-export const RedisEnv = registerAs('redis', () => validateUtil(process.env, _RedisEnv));

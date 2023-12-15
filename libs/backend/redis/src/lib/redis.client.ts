@@ -1,16 +1,14 @@
-import 'setimmediate';
 import Redis, { Redis as RedisIO } from 'ioredis';
 import { Logger } from '@nestjs/common';
-import { getStaticConfig, RedisConfig } from '@dad/config';
+import { RedisConfig } from '@dad/config';
 
 export type RedisClient = RedisIO;
 
-export async function getRedisClient(
-  redisConfig: RedisConfig,
-  logger: Logger = new Logger('RedisClient')
-): Promise<RedisClient> {
+export async function getRedisClient(redisConfig: RedisConfig): Promise<RedisClient> {
+  const logger = new Logger('RedisClient');
+
   if (!redisConfig) {
-    redisConfig = getStaticConfig(RedisConfig);
+    redisConfig = new RedisConfig();
   }
 
   return new Promise((resolve, reject) => {

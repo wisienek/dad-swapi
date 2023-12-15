@@ -1,21 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { _ServerEnv, ServerEnv } from './server.env';
+import { Injectable } from '@nestjs/common';
 import { BaseConfig } from '../../../base.config';
+import { ConfigService } from '../../../config.service';
 
 @Injectable()
-export class ServerConfig extends BaseConfig {
-  constructor(
-    @Inject(ServerEnv.KEY)
-    protected env: _ServerEnv
-  ) {
-    super();
+export class ServerConfig extends BaseConfig<'SERVER'> {
+  constructor(configService?: ConfigService) {
+    super('SERVER', configService ?? ConfigService.init(ServerConfig));
   }
 
   get port(): number {
-    return this.env.APP_PORT;
+    return this.variables.APP_PORT;
   }
 
   get swapiBaseUrl(): string {
-    return this.env.SWAPI_SERVER_BASE_URL;
+    return this.variables.SWAPI_SERVER_BASE_URL;
   }
 }

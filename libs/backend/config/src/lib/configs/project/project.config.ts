@@ -1,26 +1,24 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { _ProjectEnv, NodeEnv, ProjectEnv } from './project.env';
+import { Injectable } from '@nestjs/common';
+import { NodeEnv } from './project.env';
 import { BaseConfig } from '../../base.config';
+import { ConfigService } from '../../config.service';
 
 @Injectable()
-export class ProjectConfig extends BaseConfig {
-  constructor(
-    @Inject(ProjectEnv.KEY)
-    protected env: _ProjectEnv
-  ) {
-    super();
+export class ProjectConfig extends BaseConfig<'PROJECT'> {
+  constructor(configService?: ConfigService) {
+    super('PROJECT', configService ?? ConfigService.init(ProjectConfig));
   }
 
   get node_env() {
-    return this.env.NODE_ENV;
+    return this.variables.NODE_ENV;
   }
 
   isDev() {
-    return this.env.NODE_ENV === NodeEnv.DEV;
+    return this.variables.NODE_ENV === NodeEnv.DEV;
   }
 
   isProd() {
-    return this.env.NODE_ENV === NodeEnv.PROD;
+    return this.variables.NODE_ENV === NodeEnv.PROD;
   }
 
   isLocal() {

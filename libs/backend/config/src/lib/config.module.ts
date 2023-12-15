@@ -1,34 +1,40 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ClassConstructor } from 'class-transformer';
 import { BaseConfig } from './base.config';
-import { ProjectConfig, ServerConfig, ProjectEnv, ServerEnv } from './configs';
-
-const CONFIGS = {
-  [ProjectConfig.name]: ProjectEnv,
-  [ServerConfig.name]: ServerEnv,
-};
-
-export function getStaticConfig<T>(config: ClassConstructor<T>): T {
-  const configEnv = CONFIGS[config.name];
-  return new config(configEnv());
-}
+import { ConfigType } from './configs/config.types';
+import { ConfigService } from './config.service';
 
 @Module({})
 export class ConfigModuleInternal {
-  static forConfigs(...configs: ClassConstructor<BaseConfig>[]): DynamicModule {
-    const configFeatures: DynamicModule[] = configs.map((config) => {
-      const configEnv = CONFIGS[config.name];
-      return ConfigModule.forFeature(configEnv);
-    });
+  static forConfigs(configs: ClassConstructor<BaseConfig<ConfigType>>[]): DynamicModule {
+    const logger = new Logger(ConfigModule.name);
 
-    const envFilePath = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+    const providers: Provider[] = [
+      {
+        provide: ConfigService,
+        useFactory() {
+          const configService = ConfigService.init(...configs);
+          configs.forEach((config) => logger.debug(`${config.name} was initialized`));
+          return configService;
+        },
+      },
+    ];
+
+    for (const config of configs) {
+      providers.push({
+        provide: config,
+        useFactory: (configService: ConfigService) => {
+          return configService.getConfigFor(config);
+        },
+        inject: [ConfigService],
+      });
+    }
 
     return {
-      module: ConfigModuleInternal,
-      imports: [ConfigModule.forRoot({ envFilePath }), ...configFeatures],
-      providers: [...configs],
-      exports: [...configs],
+      module: ConfigModule,
+      providers,
+      exports: providers,
     };
   }
 }
