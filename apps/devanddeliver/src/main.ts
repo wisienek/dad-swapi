@@ -1,20 +1,35 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
-import { Logger } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
-
+import { ClassSerializerInterceptor, Logger, ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app/app.module';
+import { ServerConfig } from '@dad/config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const globalPrefix = 'api';
-  app.setGlobalPrefix(globalPrefix);
-  const port = process.env.PORT || 3000;
+  const logger = new Logger('APP');
+
+  const app = await NestFactory.create(AppModule, { logger });
+  app.enableCors();
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    })
+  );
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
+  const docsConfig = new DocumentBuilder().setTitle('DevAndDeliver SWAPI').addBearerAuth().setVersion('1.0').build();
+  const document = SwaggerModule.createDocument(app, docsConfig, {
+    include: [AppModule],
+    deepScanRoutes: true,
+  });
+  SwaggerModule.setup(`docs`, app, document);
+
+  const port = app.get(ServerConfig).port;
+
   await app.listen(port);
-  Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
+  logger.log(`🚀 Application is running on: http://localhost:${port}/`);
 }
 
 bootstrap();
