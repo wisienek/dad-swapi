@@ -30,17 +30,14 @@ export class SwapiService {
 
     const collected: U[] = [];
     let swapiResult: SwapiPagination<U> | null = null;
+    let nextPage: number | null = null;
 
     do {
-      swapiResult = await this.swapiClient.handleRequest<SwapiPagination<U>>(resource);
+      swapiResult = await this.swapiClient.handleRequest<SwapiPagination<U>>(resource, null, nextPage);
+      collected.push(...(swapiResult?.results ?? []));
 
-      if (swapiResult?.next) {
-        collected.push(...swapiResult.results);
-
-        const nextPageNumber = Number(swapiResult.next.match(/\d/g)?.[0]);
-        swapiResult = await this.swapiClient.handleRequest<SwapiPagination<U>>(resource, null, nextPageNumber);
-      }
-    } while (swapiResult?.next);
+      nextPage = swapiResult?.next ? Number(swapiResult.next.match(/\d/g)?.[0]) : null;
+    } while (nextPage !== null);
 
     await this.redis.set(key, JSON.stringify(collected), 'EX', SwapiService.Request_TTL);
 
@@ -54,10 +51,10 @@ export class SwapiService {
     const moviesPaginated: Paginated<FilmsDto> = await this.getAll(SwapiResources.FILMS, { disablePagination: true });
     const movies = moviesPaginated.items;
 
-    const words = _.words(this.getSanitizedMoviesDescription(movies));
+    const words = _.words(this.getSanitizedMoviesDescription(movies)).map((w) => w.toLowerCase());
     const wordCount = _.countBy(words);
 
-    return Object.entries(wordCount);
+    return Object.entries(wordCount).sort((a, b) => b[1] - a[1]);
   }
 
   public async getMostMentionedCharacters(): Promise<Array<String>> {
