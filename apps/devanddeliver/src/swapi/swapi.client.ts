@@ -15,13 +15,14 @@ export class SwapiClient {
    * Wrapper method for swapi calls
    * @param resource - which item to search for
    * @param id - for getting specific item
+   * @param page - handle page number of swapi paginated response
    * @param timeoutMs - time to timeout request
    */
-  public async handleRequest<T>(resource: SwapiResources, id?: number, timeoutMs = 10000): Promise<T> {
+  public async handleRequest<T>(resource: SwapiResources, id?: number, page?: number, timeoutMs = 10000): Promise<T> {
     try {
       const res = await firstValueFrom(
         this.httpService
-          .get<T>(`/${resource}${id ? `/${id}` : ''}`, {
+          .get<T>(`/${resource}${id ? `/${id}` : ''}${page ? `?page=${page}` : ''}`, {
             headers: {
               Accept: 'application/json',
             },

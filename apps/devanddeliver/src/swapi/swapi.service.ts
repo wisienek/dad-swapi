@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { EndpointToClassType, Paginated, SwapiResources } from '@dad/shared';
+import { EndpointToClassMap, FilmsDto, Paginated, SwapiResources } from '@dad/shared';
 import { SwapiClient } from './swapi.client';
-import { GetAllInputDto } from './dto';
+import { GetAllInputDto, SwapiPagination } from './dto';
 import { REDIS, RedisClient } from '@dad/redis';
+import _ from 'lodash';
 
 @Injectable()
 export class SwapiService {
@@ -15,7 +16,7 @@ export class SwapiService {
    * @param resource - name of the resource to search for
    * @param paginationData - optional options for pagination
    */
-  public async getAll<T extends SwapiResources, U extends EndpointToClassType[T]>(
+  public async getAll<T extends SwapiResources, U extends EndpointToClassMap[T]>(
     resource: T,
     paginationData: GetAllInputDto
   ): Promise<Paginated<U>> {
@@ -27,10 +28,56 @@ export class SwapiService {
       return this.getPaginatedResponse(parsed, paginationData);
     }
 
-    const swapiResult = await this.swapiClient.handleRequest<Array<U>>(resource);
-    await this.redis.set(key, JSON.stringify(swapiResult), 'EX', SwapiService.Request_TTL);
+    const collected: U[] = [];
+    let swapiResult: SwapiPagination<U> | null = null;
 
-    return this.getPaginatedResponse(swapiResult, paginationData);
+    do {
+      swapiResult = await this.swapiClient.handleRequest<SwapiPagination<U>>(resource);
+
+      if (swapiResult?.next) {
+        collected.push(...swapiResult.results);
+
+        const nextPageNumber = Number(swapiResult.next.match(/\d/g)?.[0]);
+        swapiResult = await this.swapiClient.handleRequest<SwapiPagination<U>>(resource, null, nextPageNumber);
+      }
+    } while (swapiResult?.next);
+
+    await this.redis.set(key, JSON.stringify(collected), 'EX', SwapiService.Request_TTL);
+
+    return this.getPaginatedResponse(collected, paginationData);
+  }
+
+  /**
+   * Counts up all words from movies crawl property and returns word paired with their number of occurrences
+   */
+  public async getUniqueWordsFromFilms(): Promise<Array<[String, Number]>> {
+    const moviesPaginated: Paginated<FilmsDto> = await this.getAll(SwapiResources.FILMS, { disablePagination: true });
+    const movies = moviesPaginated.items;
+
+    const words = _.words(this.getSanitizedMoviesDescription(movies));
+    const wordCount = _.countBy(words);
+
+    return Object.entries(wordCount);
+  }
+
+  public async getMostMentionedCharacters(): Promise<Array<String>> {
+    const peoplePaginated = await this.getAll(SwapiResources.PEOPLE, { disablePagination: true });
+    const moviesPaginated = await this.getAll(SwapiResources.FILMS, { disablePagination: true });
+
+    const combinedDescription = this.getSanitizedMoviesDescription(moviesPaginated.items);
+
+    const nameCount = new Map<string, number>();
+
+    peoplePaginated.items.forEach((person) => {
+      const regex = new RegExp(`\\b${person.name}\\b`, 'gi');
+      const occurrences = (combinedDescription.match(regex) || []).length;
+      nameCount.set(person.name, occurrences);
+    });
+
+    const maxOccurrences = Math.max(...nameCount.values());
+    return [...nameCount.entries()]
+      .filter(([, occurrences]) => occurrences === maxOccurrences)
+      .map(([name, _]) => name);
   }
 
   /**
@@ -38,7 +85,7 @@ export class SwapiService {
    * @param resource - name of the resource to search for
    * @param id - id of a resource
    */
-  public async getOne<T extends SwapiResources, U extends EndpointToClassType[T]>(resource: T, id: number): Promise<U> {
+  public async getOne<T extends SwapiResources, U extends EndpointToClassMap[T]>(resource: T, id: number): Promise<U> {
     const key = this.getCacheKey(resource, id);
     const fromCache: string = await this.redis.get(key);
     if (fromCache) {
@@ -49,6 +96,16 @@ export class SwapiService {
     await this.redis.set(key, JSON.stringify(swapiResult), 'EX', SwapiService.Request_TTL);
 
     return swapiResult;
+  }
+
+  /**
+   * Joins and Sanitizes movie crawl descriptions for further analysis
+   * @param films - array of movies
+   * @private
+   */
+  private getSanitizedMoviesDescription(films: FilmsDto[]): string {
+    const combinedDescription = films.map((movie) => movie.opening_crawl).join(' ');
+    return _.replace(combinedDescription, /[.,\/#!$%\^&\*;:{}=\-_`~()\r\n]/g, '');
   }
 
   /**

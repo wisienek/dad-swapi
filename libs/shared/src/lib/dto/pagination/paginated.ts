@@ -1,14 +1,13 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * Pagination wrapper class
  * Takes as an input current array of items, total, numbers per page and current page.
  */
 export class Paginated<T> {
-  /**
-   * Current array of items (correct with pageNumber)
-   */
-  @ApiHideProperty()
+  @ApiProperty({
+    description: 'Current array of items (correct with pageNumber)',
+  })
   items: T[];
 
   @ApiProperty({

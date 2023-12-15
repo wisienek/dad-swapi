@@ -19,7 +19,7 @@ async function bootstrap() {
   );
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
-  const docsConfig = new DocumentBuilder().setTitle('DevAndDeliver SWAPI').addBearerAuth().setVersion('1.0').build();
+  const docsConfig = new DocumentBuilder().setTitle('DevAndDeliver SWAPI').setVersion('1.0').build();
   const document = SwaggerModule.createDocument(app, docsConfig, {
     include: [AppModule],
     deepScanRoutes: true,

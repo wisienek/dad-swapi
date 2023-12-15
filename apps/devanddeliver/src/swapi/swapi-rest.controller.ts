@@ -1,6 +1,6 @@
 import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { SwapiResources } from '@dad/shared';
+import { EndpointClasses, Paginated, SwapiResources } from '@dad/shared';
 import { SwapiService } from './swapi.service';
 import { GetAllInputDto } from './dto';
 
@@ -20,6 +20,7 @@ export class SwapiRestController {
   })
   @ApiOkResponse({
     description: `List of elements for given resource`,
+    type: Paginated<EndpointClasses>,
   })
   @ApiQuery({
     type: GetAllInputDto,
@@ -28,6 +29,22 @@ export class SwapiRestController {
   @Get(':resource')
   getResources(@Param('resource') resource: SwapiResources, @Query() data: GetAllInputDto) {
     return this.swapiService.getAll(resource, data);
+  }
+
+  @ApiOkResponse({
+    description: 'List of pairs of unique words and their representing number of occurrences',
+  })
+  @Get('films/unique-words')
+  getUniqueWordsFromFilms() {
+    return this.swapiService.getUniqueWordsFromFilms();
+  }
+
+  @ApiOkResponse({
+    description: 'List of names of characters that appear most often in movies description',
+  })
+  @Get('films/most-mentioned')
+  getMostMentionedCharacters() {
+    return this.swapiService.getMostMentionedCharacters();
   }
 
   @ApiParam({
