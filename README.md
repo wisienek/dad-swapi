@@ -71,7 +71,7 @@ In some cases, you need to build containers locally to simulate a production env
 
 To build and run the container follow these steps:
 
-(nx installed globally with docker and currently in root directory)
+(nx installed globally with docker and currently in root directory, redis container running)
 ```shell
 docker build -t api -f dockerize/Dockerfile .
 docker-compose -f ./docker-compose-apps.yml up api
